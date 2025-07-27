@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Moq;
 using MvvmNavigationKit.Abstractions;
 using MvvmNavigationKit.Abstractions.ViewModelBase;
 using MvvmNavigationKit.NavigationServices;
@@ -308,6 +307,26 @@ namespace AvaloniaApp.Tests
             navigationService.CloseOverlay();
 
             Assert.Equal("тест", fakeView.animal.Breed);
+        }
+
+        [Fact]
+        public void ResetAndNavigate_ResetAndNavigateToVM_ShouldClearHistory()
+        {
+            //Arrange
+            NavigationService navigationService =
+                _serviceProvider.GetRequiredService<NavigationService>();
+
+            //Act
+            navigationService.Navigate<FakeViewModel2>();
+            navigationService.Navigate<ViewModelBase>();
+            navigationService.Navigate<FakeViewModel>();
+            navigationService.ResetAndNavigate<FakeViewModel2>();
+
+            //Assert
+            INavigationStore navStore = _serviceProvider.GetRequiredService<INavigationStore>();
+
+            Assert.True(navStore.CurrentViewModel!.GetType() == typeof(FakeViewModel2));
+            Assert.True(!navigationService.HistoryIsNotEmpty);
         }
     }
 }
