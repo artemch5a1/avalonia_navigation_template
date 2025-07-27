@@ -193,6 +193,43 @@ namespace MvvmNavigationKit.NavigationServices
         }
 
         /// <summary>
+        /// Сбрасывает историю навигации и выполняет переход на указанную ViewModel.
+        /// </summary>
+        /// <typeparam name="TViewModel">Тип ViewModel, на которую выполняется переход</typeparam>
+        public void ResetAndNavigate<TViewModel>()
+            where TViewModel : ViewModelTemplate
+        {
+            DestroyAndNavigate<TViewModel>();
+            _historyNavigation.Clear();
+            _logger.LogInformation($"История была очищена");
+        }
+
+        /// <summary>
+        /// Сбрасывает историю навигации и выполняет переход на указанную ViewModel с передачей параметров.
+        /// </summary>
+        /// <typeparam name="TViewModel"> Тип ViewModel, на которую выполняется переход</typeparam>
+        /// <typeparam name="TParams">Тип параметров инициализации</typeparam>
+        /// <param name="params">Параметры для инициализации ViewModel</param>
+        /// <remarks>
+        /// <para>
+        /// Не сохраняет текущую ViewModel в историю
+        /// </para>
+        /// <para>
+        /// Вызывает <see cref="ViewModelTemplate.Dispose"/> у текущей ViewModel
+        /// </para>
+        /// </remarks>
+        /// <exception cref="InvalidOperationException">
+        /// Выбрасывается, если не удалось разрешить TViewModel через DI-контейнер
+        /// </exception>
+        public void ResetAndNavigate<TViewModel, TParams>(TParams @params)
+            where TViewModel : ViewModelTemplate
+        {
+            DestroyAndNavigate<TViewModel, TParams>(@params);
+            _historyNavigation.Clear();
+            _logger.LogInformation($"История была очищена");
+        }
+
+        /// <summary>
         /// Выполняет навигацию во вложенное оверлейное окно без смены основного контента.
         /// ViewModel будет записана в историю и может быть закрыта через GoBackOneStep.
         /// </summary>

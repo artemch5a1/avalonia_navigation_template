@@ -16,6 +16,12 @@ namespace MvvmNavigationKit.Abstractions
         public void DestroyAndNavigate<TViewModel, TParams>(TParams @params)
             where TViewModel : ViewModelTemplate;
 
+        public void ResetAndNavigate<TViewModel>()
+            where TViewModel : ViewModelTemplate;
+
+        public void ResetAndNavigate<TViewModel, TParams>(TParams @params)
+            where TViewModel : ViewModelTemplate;
+
         public void NavigateOverlay<TViewModel>(
             Action<ViewModelTemplate?>? overlayAction = null,
             Action? onClose = null
