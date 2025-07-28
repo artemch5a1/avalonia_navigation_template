@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using MVVMNavigationKit.Exceptions;
 
 namespace MvvmNavigationKit.Abstractions.ViewModelBase
 {
@@ -65,9 +66,7 @@ namespace MvvmNavigationKit.Abstractions.ViewModelBase
             if (@params is T t)
                 return t;
 
-            throw new ArgumentException(
-                $"Expected type {typeof(T).Name}, but got {@params?.GetType().Name ?? "null"}"
-            );
+            throw new TypeMismatchException(typeof(T), @params?.GetType());
         }
 
         /// <summary>
