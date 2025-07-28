@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using MvvmNavigationKit.Abstractions;
 using MvvmNavigationKit.Abstractions.ViewModelBase;
+using MVVMNavigationKit.Exceptions;
 using MvvmNavigationKit.NavigationServices;
 using MvvmNavigationKit.NavigationStores;
 using MvvmNavigationKit.Options;
@@ -81,8 +82,13 @@ namespace AvaloniaApp.Tests
             int @param = 12;
 
             //Act & Assert
-            Assert.Throws<ArgumentException>(() =>
+            TypeMismatchException? result = Assert.Throws<TypeMismatchException>(() =>
                 navigationService.Navigate<FakeViewModel, int>(@param)
+            );
+
+            Assert.Equal(
+                new TypeMismatchException(typeof((int, string)), typeof(int)).Message,
+                result.Message
             );
         }
 
