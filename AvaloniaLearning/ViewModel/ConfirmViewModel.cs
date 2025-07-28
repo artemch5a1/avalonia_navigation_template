@@ -17,7 +17,7 @@ namespace AvaloniaApp.ViewModel
             _navigationService = navigationService;
         }
 
-        public event Action? ConfrimAction;
+        public Action? ConfrimAction;
 
         [RelayCommand]
         private void Confirm()
@@ -30,6 +30,12 @@ namespace AvaloniaApp.ViewModel
         private void CloseOverlay()
         {
             _navigationService.CloseOverlay();
+        }
+
+        public override void Dispose()
+        {
+            ConfrimAction = null;
+            base.Dispose();
         }
     }
 }
