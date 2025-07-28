@@ -73,7 +73,7 @@ namespace AvaloniaApp.Tests
         }
 
         [Fact]
-        public void Navigate_NavigateWithWrongTypeParams_ShouldThrowArgumentException()
+        public void Navigate_NavigateWithWrongTypeParams_ShouldThrowTypeMismatchException()
         {
             //Arrange
             NavigationService navigationService =
