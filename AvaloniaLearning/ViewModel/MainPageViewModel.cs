@@ -45,14 +45,13 @@ namespace AvaloniaApp.ViewModel
         {
             try
             {
-                Users = _userService.GetAllUsers();
+                Users = await _userService.GetAllUsers();
             }
             catch (Exception ex)
             {
                 _errorText = ex.Message;
                 Debug.WriteLine(_errorText);
             }
-            await Task.CompletedTask;
         }
 
         [RelayCommand]
@@ -110,7 +109,10 @@ namespace AvaloniaApp.ViewModel
                     CurrentOverlayViewModel = vm;
                     if (vm is ConfirmViewModel viewModel)
                     {
-                        viewModel.ConfrimAction += DeleteAction;
+                        viewModel.ConfrimAction += () =>
+                        {
+                            _ = DeleteAction();
+                        };
                         viewModel.Title = "Удалить пользователя?";
                     }
                 },
@@ -123,11 +125,12 @@ namespace AvaloniaApp.ViewModel
             );
         }
 
-        private void DeleteAction()
+        private async Task DeleteAction()
         {
             if (_currentIdDelete != null)
             {
-                _userService.DeleteUser((int)_currentIdDelete);
+                await _userService.DeleteUser((int)_currentIdDelete);
+                RefreshPage();
             }
         }
     }

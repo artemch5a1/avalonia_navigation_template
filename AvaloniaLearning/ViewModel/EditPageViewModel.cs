@@ -49,7 +49,7 @@ namespace AvaloniaApp.ViewModel
 
         private async Task LoadUser()
         {
-            User? user = _userService.GetUserById(_idUser ?? -1);
+            User? user = await _userService.GetUserById(_idUser ?? -1);
             if (user != null)
             {
                 UserName = user.Name;
@@ -60,7 +60,7 @@ namespace AvaloniaApp.ViewModel
         }
 
         [RelayCommand]
-        private void UpdateUser()
+        private async Task UpdateUser()
         {
             if (_idUser == null)
             {
@@ -84,7 +84,7 @@ namespace AvaloniaApp.ViewModel
                 return;
             }
 
-            bool success = _userService.UpdateUser(user);
+            bool success = await _userService.UpdateUser(user);
 
             if (success)
             {

@@ -4,6 +4,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using AvaloniaApp.Models;
 using AvaloniaApp.ServiceAbstractions;
 using AvaloniaApp.Utils;
@@ -29,26 +30,30 @@ namespace AvaloniaApp.Services.DataServices
             }
         }
 
-        public List<User> GetAllUsers()
+        public async Task<List<User>> GetAllUsers()
         {
-            return File.ReadAllLines(_filePath, Encoding.UTF8)
+            var result = await File.ReadAllLinesAsync(_filePath, Encoding.UTF8);
+
+            return result
                 .Skip(1)
                 .Where(line => !string.IsNullOrWhiteSpace(line))
                 .Select(ParseLine)
                 .ToList();
         }
 
-        public User? GetUserById(int id)
+        public async Task<User?> GetUserById(int id)
         {
-            return GetAllUsers().FirstOrDefault(u => u.Id == id);
+            var result = await GetAllUsers();
+
+            return result.FirstOrDefault(u => u.Id == id);
         }
 
-        public void CreateUser(User user)
+        public async Task<bool> CreateUser(User user)
         {
             if (!UserValidator.ValidateUser(user).Item1)
                 throw new ArgumentException("Неверный формат user");
 
-            List<User> users = GetAllUsers();
+            List<User> users = await GetAllUsers();
 
             user.Id = users.Any() ? users.Max(u => u.Id) + 1 : 1;
 
@@ -57,15 +62,17 @@ namespace AvaloniaApp.Services.DataServices
             string line =
                 $"{user.Id}{Separator}{user.Name}{Separator}{user.Surname}{Separator}{user.Email}{Separator}{user.DateAdding}{Separator}{user.DateEdit}";
 
-            File.AppendAllLines(_filePath, new[] { line }, Encoding.UTF8);
+            await File.AppendAllLinesAsync(_filePath, new[] { line }, Encoding.UTF8);
+
+            return true;
         }
 
-        public bool UpdateUser(User user)
+        public async Task<bool> UpdateUser(User user)
         {
             if (!UserValidator.ValidateUser(user).Item1)
                 return false;
 
-            List<User> users = GetAllUsers();
+            List<User> users = await GetAllUsers();
 
             int index = users.FindIndex(u => u.Id == user.Id);
 
@@ -77,14 +84,12 @@ namespace AvaloniaApp.Services.DataServices
 
             users[index] = user;
 
-            WriteAll(users);
-
-            return true;
+            return await WriteAll(users);
         }
 
-        public bool DeleteUser(int id)
+        public async Task<bool> DeleteUser(int id)
         {
-            List<User> users = GetAllUsers();
+            List<User> users = await GetAllUsers();
 
             User? userToRemove = users.FirstOrDefault(u => u.Id == id);
 
@@ -93,9 +98,7 @@ namespace AvaloniaApp.Services.DataServices
 
             users.Remove(userToRemove);
 
-            WriteAll(users);
-
-            return true;
+            return await WriteAll(users);
         }
 
         private User ParseLine(string line)
@@ -119,7 +122,7 @@ namespace AvaloniaApp.Services.DataServices
             };
         }
 
-        private void WriteAll(List<User> users)
+        private async Task<bool> WriteAll(List<User> users)
         {
             var lines = new List<string>
             {
@@ -132,7 +135,9 @@ namespace AvaloniaApp.Services.DataServices
                 )
             );
 
-            File.WriteAllLines(_filePath, lines, Encoding.UTF8);
+            await File.WriteAllLinesAsync(_filePath, lines, Encoding.UTF8);
+
+            return true;
         }
     }
 }

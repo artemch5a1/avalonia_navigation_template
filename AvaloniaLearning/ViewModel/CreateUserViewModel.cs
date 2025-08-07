@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using AvaloniaApp.Models;
 using AvaloniaApp.ServiceAbstractions;
 using AvaloniaApp.Utils;
@@ -26,12 +27,12 @@ namespace AvaloniaApp.ViewModel
         }
 
         [RelayCommand]
-        private void CreateUser()
+        private async Task CreateUser()
         {
             (bool success, string? error) validRes = UserValidator.ValidateUser(User);
             if (validRes.success)
             {
-                TryCreateUser();
+                await TryCreateUser();
             }
             else
             {
@@ -45,11 +46,11 @@ namespace AvaloniaApp.ViewModel
             _navigationService.CloseOverlay();
         }
 
-        private void TryCreateUser()
+        private async Task TryCreateUser()
         {
             try
             {
-                _userService.CreateUser(User);
+                await _userService.CreateUser(User);
                 NavToBack();
             }
             catch (Exception ex)

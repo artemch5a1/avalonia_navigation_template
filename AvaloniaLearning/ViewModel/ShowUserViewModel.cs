@@ -39,7 +39,7 @@ namespace AvaloniaApp.ViewModel
 
         private async Task LoadUser()
         {
-            User? user = _userService.GetUserById(_idUser);
+            User? user = await _userService.GetUserById(_idUser);
             if (user != null)
             {
                 User = user;
