@@ -1,4 +1,5 @@
-﻿using MvvmNavigationKit.Abstractions;
+﻿using AvaloniaApp.View.Pages;
+using MvvmNavigationKit.Abstractions;
 
 namespace AvaloniaApp.ViewModel
 {
@@ -11,6 +12,6 @@ namespace AvaloniaApp.ViewModel
             _navService = navService;
         }
 
-        public void NavToMain() => _navService.DestroyAndNavigate<MainPageViewModel>();
+        public void NavToMain() => _navService.Navigate<MainPage>();
     }
 }

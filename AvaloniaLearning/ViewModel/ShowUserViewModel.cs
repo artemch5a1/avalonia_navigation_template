@@ -50,7 +50,7 @@ namespace AvaloniaApp.ViewModel
         [RelayCommand]
         private void GoBack()
         {
-            _navigationService.CloseOverlay();
+            // _navigationService.CloseOverlay();
         }
     }
 }

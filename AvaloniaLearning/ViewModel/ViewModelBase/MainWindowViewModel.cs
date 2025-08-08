@@ -1,12 +1,12 @@
-﻿using MvvmNavigationKit.Abstractions;
-using MvvmNavigationKit.Abstractions.ViewModelBase;
-using System.ComponentModel;
+﻿using System.ComponentModel;
+using Avalonia.Controls;
+using MvvmNavigationKit.Abstractions;
 
 namespace AvaloniaApp.ViewModel
 {
     public partial class MainWindowViewModel : ViewModelBase
     {
-        public ViewModelTemplate? CurrentViewModel => _navStore.CurrentViewModel;
+        public UserControl? CurrentViewModel => _navStore.CurrentViewModel;
 
         private readonly INavigationStore _navStore;
 
@@ -29,7 +29,6 @@ namespace AvaloniaApp.ViewModel
             if (IsDisposed)
                 return;
             _navStore.PropertyChanged -= OnViewModelChanged;
-            CurrentViewModel?.Dispose();
             base.Dispose();
         }
     }

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Avalonia.Controls;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MvvmNavigationKit.Abstractions;
@@ -37,13 +38,15 @@ namespace MvvmNavigationKit.NavigationServices
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger _logger;
 
-        private Stack<ViewModelTemplate> _historyNavigation = new();
         private readonly int _maxSizeHistory;
+
+        private Dictionary<Type, Type> _keyViewModel = new();
+        private Type viewModels;
 
         /// <summary>
         /// Возврашает true если история не пустая
         /// </summary>
-        public bool HistoryIsNotEmpty => _historyNavigation.Count > 0;
+        //public bool HistoryIsNotEmpty => _historyNavigation.Count > 0;
 
         private Action<ViewModelTemplate?>? OverlayAction { get; set; }
 
@@ -70,6 +73,21 @@ namespace MvvmNavigationKit.NavigationServices
             _logger = logger;
         }
 
+        public void RegistrViewModel<TUserControl, TViewModel>()
+            where TViewModel : ViewModelTemplate
+            where TUserControl : UserControl
+        {
+            TUserControl? userControl = _serviceProvider.GetService<TUserControl>();
+            TViewModel? Model = _serviceProvider.GetService<TViewModel>();
+
+            if (userControl == null || Model == null)
+            {
+                throw new Exception("иди нахуй");
+            }
+
+            _keyViewModel[typeof(TUserControl)] = typeof(TViewModel);
+        }
+
         /// <summary>
         /// Выполняет переход на указанную ViewModel без параметров.
         /// </summary>
@@ -78,10 +96,23 @@ namespace MvvmNavigationKit.NavigationServices
         /// Выбрасывается, если не удалось разрешить TViewModel через DI-контейнер
         /// </exception>
         public void Navigate<TViewModel>()
-            where TViewModel : ViewModelTemplate
+            where TViewModel : UserControl
         {
-            ViewModelTemplate viewModel = _serviceProvider.GetRequiredService<TViewModel>();
-            PushToHistoryAndSetViewModel(viewModel);
+            UserControl viewModel = _serviceProvider.GetRequiredService<TViewModel>();
+
+            ViewModelTemplate? viewModelTemplate = null;
+
+            if (_keyViewModel.TryGetValue(typeof(TViewModel), out Type? viewModels))
+            {
+                viewModelTemplate = (ViewModelTemplate?)_serviceProvider.GetService(viewModels);
+            }
+
+            if (viewModelTemplate != null)
+            {
+                viewModel.DataContext = viewModelTemplate;
+            }
+
+            _navStore.CurrentViewModel = viewModel;
             _logger.LogInformation($"Переход к {viewModel.GetType().Name}");
         }
 
@@ -98,11 +129,20 @@ namespace MvvmNavigationKit.NavigationServices
         /// Ожидается, что целевая ViewModel реализует метод Initialize(TParams parameters).
         /// </remarks>
         public void Navigate<TViewModel, TParams>(TParams @params)
-            where TViewModel : ViewModelTemplate
+            where TViewModel : UserControl
         {
-            ViewModelTemplate viewModel = _serviceProvider.GetRequiredService<TViewModel>();
-            viewModel.Initialize(@params);
-            PushToHistoryAndSetViewModel(viewModel);
+            UserControl viewModel = _serviceProvider.GetRequiredService<TViewModel>();
+            ViewModelTemplate? viewModelTemplate = (ViewModelTemplate?)
+                _serviceProvider.GetService(_keyViewModel[typeof(TViewModel)]);
+
+            if (viewModelTemplate != null)
+            {
+                viewModel.DataContext = viewModelTemplate;
+                viewModelTemplate.Initialize(@params);
+            }
+
+            _navStore.CurrentViewModel = viewModel;
+
             _logger.LogInformation(
                 $"Переход к {viewModel.GetType().Name} с передачей параметров: {@params}"
             );
@@ -127,19 +167,19 @@ namespace MvvmNavigationKit.NavigationServices
         /// перестанет работать из-за очистки последнего элемента истории навигации
         /// </para>
         /// </remarks>
-        public void NavigateBack()
-        {
-            if (!HistoryIsNotEmpty)
-            {
-                _logger.LogError($"Попытка перехода назад при пустой истории");
-                return;
-            }
-            _navStore.CurrentViewModel?.Dispose();
-            ViewModelTemplate viewModel = _historyNavigation.Pop();
-            viewModel.RefreshPage();
-            _navStore.CurrentViewModel = viewModel;
-            _logger.LogInformation($"Поэтапный возврат к {viewModel.GetType().Name}");
-        }
+        //public void NavigateBack()
+        //{
+        //    if (!HistoryIsNotEmpty)
+        //    {
+        //        _logger.LogError($"Попытка перехода назад при пустой истории");
+        //        return;
+        //    }
+        //    _navStore.CurrentViewModel?.Dispose();
+        //    ViewModelTemplate viewModel = _historyNavigation.Pop();
+        //    viewModel.RefreshPage();
+        //    _navStore.CurrentViewModel = viewModel;
+        //    _logger.LogInformation($"Поэтапный возврат к {viewModel.GetType().Name}");
+        //}
 
         /// <summary>
         /// Выполняет переход на указанную ViewModel с очищением текущей
@@ -156,221 +196,221 @@ namespace MvvmNavigationKit.NavigationServices
         /// <exception cref="InvalidOperationException">
         /// Выбрасывается, если не удалось разрешить TViewModel через DI-контейнер
         /// </exception>
-        public void DestroyAndNavigate<TViewModel>()
-            where TViewModel : ViewModelTemplate
-        {
-            ViewModelTemplate viewModel = _serviceProvider.GetRequiredService<TViewModel>();
-            DisposeAndSetViewModel(viewModel);
-            _logger.LogInformation($"Переход к {viewModel.GetType().Name} без сохранения истории");
-        }
+        //public void DestroyAndNavigate<TViewModel>()
+        //    where TViewModel : ViewModelTemplate
+        //{
+        //    ViewModelTemplate viewModel = _serviceProvider.GetRequiredService<TViewModel>();
+        //    DisposeAndSetViewModel(viewModel);
+        //    _logger.LogInformation($"Переход к {viewModel.GetType().Name} без сохранения истории");
+        //}
 
-        /// <summary>
-        /// Выполняет переход на указанную ViewModel с передачей параметров с очищением текущей ViewModel
-        /// </summary>
-        /// <typeparam name="TViewModel"> Тип ViewModel, на которую выполняется переход</typeparam>
-        /// <typeparam name="TParams">Тип параметров инициализации</typeparam>
-        /// <param name="params">Параметры для инициализации ViewModel</param>
-        /// <remarks>
-        /// <para>
-        /// Не сохраняет текущую ViewModel в историю
-        /// </para>
-        /// <para>
-        /// Вызывает <see cref="ViewModelTemplate.Dispose"/> у текущей ViewModel
-        /// </para>
-        /// </remarks>
-        /// <exception cref="InvalidOperationException">
-        /// Выбрасывается, если не удалось разрешить TViewModel через DI-контейнер
-        /// </exception>
-        public void DestroyAndNavigate<TViewModel, TParams>(TParams @params)
-            where TViewModel : ViewModelTemplate
-        {
-            ViewModelTemplate viewModel = _serviceProvider.GetRequiredService<TViewModel>();
-            viewModel.Initialize(@params);
-            DisposeAndSetViewModel(viewModel);
-            _logger.LogInformation(
-                $"Переход к {viewModel.GetType().Name} без сохранения истории c передачей параметров: {@params}"
-            );
-        }
+        ///// <summary>
+        ///// Выполняет переход на указанную ViewModel с передачей параметров с очищением текущей ViewModel
+        ///// </summary>
+        ///// <typeparam name="TViewModel"> Тип ViewModel, на которую выполняется переход</typeparam>
+        ///// <typeparam name="TParams">Тип параметров инициализации</typeparam>
+        ///// <param name="params">Параметры для инициализации ViewModel</param>
+        ///// <remarks>
+        ///// <para>
+        ///// Не сохраняет текущую ViewModel в историю
+        ///// </para>
+        ///// <para>
+        ///// Вызывает <see cref="ViewModelTemplate.Dispose"/> у текущей ViewModel
+        ///// </para>
+        ///// </remarks>
+        ///// <exception cref="InvalidOperationException">
+        ///// Выбрасывается, если не удалось разрешить TViewModel через DI-контейнер
+        ///// </exception>
+        //public void DestroyAndNavigate<TViewModel, TParams>(TParams @params)
+        //    where TViewModel : ViewModelTemplate
+        //{
+        //    ViewModelTemplate viewModel = _serviceProvider.GetRequiredService<TViewModel>();
+        //    viewModel.Initialize(@params);
+        //    DisposeAndSetViewModel(viewModel);
+        //    _logger.LogInformation(
+        //        $"Переход к {viewModel.GetType().Name} без сохранения истории c передачей параметров: {@params}"
+        //    );
+        //}
 
-        /// <summary>
-        /// Сбрасывает историю навигации и выполняет переход на указанную ViewModel.
-        /// </summary>
-        /// <typeparam name="TViewModel">Тип ViewModel, на которую выполняется переход</typeparam>
-        public void ResetAndNavigate<TViewModel>()
-            where TViewModel : ViewModelTemplate
-        {
-            DestroyAndNavigate<TViewModel>();
-            _historyNavigation.Clear();
-            _logger.LogInformation($"История была очищена");
-        }
+        ///// <summary>
+        ///// Сбрасывает историю навигации и выполняет переход на указанную ViewModel.
+        ///// </summary>
+        ///// <typeparam name="TViewModel">Тип ViewModel, на которую выполняется переход</typeparam>
+        //public void ResetAndNavigate<TViewModel>()
+        //    where TViewModel : ViewModelTemplate
+        //{
+        //    DestroyAndNavigate<TViewModel>();
+        //    _historyNavigation.Clear();
+        //    _logger.LogInformation($"История была очищена");
+        //}
 
-        /// <summary>
-        /// Сбрасывает историю навигации и выполняет переход на указанную ViewModel с передачей параметров.
-        /// </summary>
-        /// <typeparam name="TViewModel"> Тип ViewModel, на которую выполняется переход</typeparam>
-        /// <typeparam name="TParams">Тип параметров инициализации</typeparam>
-        /// <param name="params">Параметры для инициализации ViewModel</param>
-        /// <remarks>
-        /// <para>
-        /// Не сохраняет текущую ViewModel в историю
-        /// </para>
-        /// <para>
-        /// Вызывает <see cref="ViewModelTemplate.Dispose"/> у текущей ViewModel
-        /// </para>
-        /// </remarks>
-        /// <exception cref="InvalidOperationException">
-        /// Выбрасывается, если не удалось разрешить TViewModel через DI-контейнер
-        /// </exception>
-        public void ResetAndNavigate<TViewModel, TParams>(TParams @params)
-            where TViewModel : ViewModelTemplate
-        {
-            DestroyAndNavigate<TViewModel, TParams>(@params);
-            _historyNavigation.Clear();
-            _logger.LogInformation($"История была очищена");
-        }
+        ///// <summary>
+        ///// Сбрасывает историю навигации и выполняет переход на указанную ViewModel с передачей параметров.
+        ///// </summary>
+        ///// <typeparam name="TViewModel"> Тип ViewModel, на которую выполняется переход</typeparam>
+        ///// <typeparam name="TParams">Тип параметров инициализации</typeparam>
+        ///// <param name="params">Параметры для инициализации ViewModel</param>
+        ///// <remarks>
+        ///// <para>
+        ///// Не сохраняет текущую ViewModel в историю
+        ///// </para>
+        ///// <para>
+        ///// Вызывает <see cref="ViewModelTemplate.Dispose"/> у текущей ViewModel
+        ///// </para>
+        ///// </remarks>
+        ///// <exception cref="InvalidOperationException">
+        ///// Выбрасывается, если не удалось разрешить TViewModel через DI-контейнер
+        ///// </exception>
+        //public void ResetAndNavigate<TViewModel, TParams>(TParams @params)
+        //    where TViewModel : ViewModelTemplate
+        //{
+        //    DestroyAndNavigate<TViewModel, TParams>(@params);
+        //    _historyNavigation.Clear();
+        //    _logger.LogInformation($"История была очищена");
+        //}
 
-        /// <summary>
-        /// Выполняет навигацию во вложенное оверлейное окно без смены основного контента.
-        /// ViewModel будет записана в историю и может быть закрыта через GoBackOneStep.
-        /// </summary>
-        /// <typeparam name="TViewModel">Тип ViewModel оверлея.</typeparam>
-        /// <param name="overlayAction">Действие, которое устанавливает или сбрасывает overlay ViewModel в хосте.</param>
-        /// <param name="onClose">Дополнительное действие, выполняемое при закрытии оверлея.</param>
-        public void NavigateOverlay<TViewModel>(
-            Action<ViewModelTemplate?>? overlayAction = null,
-            Action? onClose = null
-        )
-            where TViewModel : ViewModelTemplate
-        {
-            ViewModelTemplate? viewModel = _serviceProvider.GetRequiredService<TViewModel>();
+        ///// <summary>
+        ///// Выполняет навигацию во вложенное оверлейное окно без смены основного контента.
+        ///// ViewModel будет записана в историю и может быть закрыта через GoBackOneStep.
+        ///// </summary>
+        ///// <typeparam name="TViewModel">Тип ViewModel оверлея.</typeparam>
+        ///// <param name="overlayAction">Действие, которое устанавливает или сбрасывает overlay ViewModel в хосте.</param>
+        ///// <param name="onClose">Дополнительное действие, выполняемое при закрытии оверлея.</param>
+        //public void NavigateOverlay<TViewModel>(
+        //    Action<ViewModelTemplate?>? overlayAction = null,
+        //    Action? onClose = null
+        //)
+        //    where TViewModel : ViewModelTemplate
+        //{
+        //    ViewModelTemplate? viewModel = _serviceProvider.GetRequiredService<TViewModel>();
 
-            overlayAction?.Invoke(viewModel);
+        //    overlayAction?.Invoke(viewModel);
 
-            OverlayAction = vm =>
-            {
-                overlayAction?.Invoke(null);
-                onClose?.Invoke();
-            };
+        //    OverlayAction = vm =>
+        //    {
+        //        overlayAction?.Invoke(null);
+        //        onClose?.Invoke();
+        //    };
 
-            _historyNavigation.Push(viewModel);
+        //    _historyNavigation.Push(viewModel);
 
-            _logger.LogInformation($"Оверлейная навигация на {viewModel.GetType().Name}");
-        }
+        //    _logger.LogInformation($"Оверлейная навигация на {viewModel.GetType().Name}");
+        //}
 
-        /// <summary>
-        /// Выполняет навигацию во вложенное оверлейное окно без смены основного контента
-        /// с параметрами.
-        /// ViewModel будет записана в историю и может быть закрыта через GoBackOneStep.
-        /// </summary>
-        /// <typeparam name="TParam">Тип передаваемых параметров.</typeparam>
-        /// <typeparam name="TViewModel">Тип ViewModel оверлея.</typeparam>
-        /// <param name="params"> Параметры инициализации</param>
-        /// <param name="overlayAction">Действие, которое устанавливает или сбрасывает overlay ViewModel в хосте.</param>
-        /// <param name="onClose">Дополнительное действие, выполняемое при закрытии оверлея.</param>
-        public void NavigateOverlay<TViewModel, TParam>(
-            TParam @params,
-            Action<ViewModelTemplate?>? overlayAction = null,
-            Action? onClose = null
-        )
-            where TViewModel : ViewModelTemplate
-        {
-            ViewModelTemplate viewModel = _serviceProvider.GetRequiredService<TViewModel>();
+        ///// <summary>
+        ///// Выполняет навигацию во вложенное оверлейное окно без смены основного контента
+        ///// с параметрами.
+        ///// ViewModel будет записана в историю и может быть закрыта через GoBackOneStep.
+        ///// </summary>
+        ///// <typeparam name="TParam">Тип передаваемых параметров.</typeparam>
+        ///// <typeparam name="TViewModel">Тип ViewModel оверлея.</typeparam>
+        ///// <param name="params"> Параметры инициализации</param>
+        ///// <param name="overlayAction">Действие, которое устанавливает или сбрасывает overlay ViewModel в хосте.</param>
+        ///// <param name="onClose">Дополнительное действие, выполняемое при закрытии оверлея.</param>
+        //public void NavigateOverlay<TViewModel, TParam>(
+        //    TParam @params,
+        //    Action<ViewModelTemplate?>? overlayAction = null,
+        //    Action? onClose = null
+        //)
+        //    where TViewModel : ViewModelTemplate
+        //{
+        //    ViewModelTemplate viewModel = _serviceProvider.GetRequiredService<TViewModel>();
 
-            viewModel.Initialize(@params);
+        //    viewModel.Initialize(@params);
 
-            overlayAction?.Invoke(viewModel);
+        //    overlayAction?.Invoke(viewModel);
 
-            OverlayAction = vm =>
-            {
-                overlayAction?.Invoke(null);
-                onClose?.Invoke();
-            };
+        //    OverlayAction = vm =>
+        //    {
+        //        overlayAction?.Invoke(null);
+        //        onClose?.Invoke();
+        //    };
 
-            _historyNavigation.Push(viewModel);
+        //    _historyNavigation.Push(viewModel);
 
-            _logger.LogInformation(
-                $"Оверлейная навигация на {viewModel.GetType().Name} с передачей параметров: {@params}"
-            );
-        }
+        //    _logger.LogInformation(
+        //        $"Оверлейная навигация на {viewModel.GetType().Name} с передачей параметров: {@params}"
+        //    );
+        //}
 
-        /// <summary>
-        /// Выполняет действие по закрытию оверлейного окна
-        /// и очищает ViewModel
-        /// </summary>
-        public void CloseOverlay()
-        {
-            if (!HistoryIsNotEmpty)
-            {
-                _logger.LogError("Попытка закрытия оверлейного окна при пустой истории");
-                return;
-            }
+        ///// <summary>
+        ///// Выполняет действие по закрытию оверлейного окна
+        ///// и очищает ViewModel
+        ///// </summary>
+        //public void CloseOverlay()
+        //{
+        //    if (!HistoryIsNotEmpty)
+        //    {
+        //        _logger.LogError("Попытка закрытия оверлейного окна при пустой истории");
+        //        return;
+        //    }
 
-            ViewModelTemplate viewModel = _historyNavigation.Pop();
+        //    ViewModelTemplate viewModel = _historyNavigation.Pop();
 
-            viewModel.Dispose();
+        //    viewModel.Dispose();
 
-            OverlayAction?.Invoke(null);
+        //    OverlayAction?.Invoke(null);
 
-            OverlayAction = null;
+        //    OverlayAction = null;
 
-            _logger.LogInformation("Закрытие оверлейного окна");
-        }
+        //    _logger.LogInformation("Закрытие оверлейного окна");
+        //}
 
-        /// <summary>
-        /// Добавляет текущую ViewModel в историю и устанавливает новую ViewModel.
-        /// </summary>
-        /// <param name="viewModel">Новая ViewModel для перехода</param>
-        /// <remarks>
-        /// <para>
-        /// Если текущая ViewModel в <see cref="_navStore"/> равна null, она не добавляется в историю.
-        /// </para>
-        /// <para>
-        /// При достижении максимального размера истории (<see cref="_maxSizeHistory"/>),
-        /// самая старая запись удаляется.
-        /// </para>
-        /// </remarks>
-        private void PushToHistoryAndSetViewModel(ViewModelTemplate viewModel)
-        {
-            if (_navStore.CurrentViewModel != null)
-            {
-                if (_maxSizeHistory <= _historyNavigation.Count)
-                {
-                    string type = RemoveLastVM();
-                    _logger.LogWarning(
-                        $"Превышен лимит истории, удалена самая старая запись ({type})"
-                    );
-                }
-                _historyNavigation.Push(_navStore.CurrentViewModel);
-            }
-            _navStore.CurrentViewModel = viewModel;
-        }
+        ///// <summary>
+        ///// Добавляет текущую ViewModel в историю и устанавливает новую ViewModel.
+        ///// </summary>
+        ///// <param name="viewModel">Новая ViewModel для перехода</param>
+        ///// <remarks>
+        ///// <para>
+        ///// Если текущая ViewModel в <see cref="_navStore"/> равна null, она не добавляется в историю.
+        ///// </para>
+        ///// <para>
+        ///// При достижении максимального размера истории (<see cref="_maxSizeHistory"/>),
+        ///// самая старая запись удаляется.
+        ///// </para>
+        ///// </remarks>
+        //private void PushToHistoryAndSetViewModel(ViewModelTemplate viewModel)
+        //{
+        //    if (_navStore.CurrentViewModel != null)
+        //    {
+        //        if (_maxSizeHistory <= _historyNavigation.Count)
+        //        {
+        //            string type = RemoveLastVM();
+        //            _logger.LogWarning(
+        //                $"Превышен лимит истории, удалена самая старая запись ({type})"
+        //            );
+        //        }
+        //        _historyNavigation.Push(_navStore.CurrentViewModel);
+        //    }
+        //    _navStore.CurrentViewModel = viewModel;
+        //}
 
-        /// <summary>
-        /// Функция для очищения текущей ViewModel и переходу на следующую
-        /// </summary>
-        /// <remarks>
-        /// Вызывается базовый переопределяемый метод у текущей ViewModel
-        /// <see cref="ViewModelTemplate.Dispose"/>
-        /// </remarks>
-        private void DisposeAndSetViewModel(ViewModelTemplate viewModel)
-        {
-            if (_navStore.CurrentViewModel != null)
-            {
-                _navStore.CurrentViewModel.Dispose();
-            }
-            _navStore.CurrentViewModel = viewModel;
-        }
+        ///// <summary>
+        ///// Функция для очищения текущей ViewModel и переходу на следующую
+        ///// </summary>
+        ///// <remarks>
+        ///// Вызывается базовый переопределяемый метод у текущей ViewModel
+        ///// <see cref="ViewModelTemplate.Dispose"/>
+        ///// </remarks>
+        //private void DisposeAndSetViewModel(ViewModelTemplate viewModel)
+        //{
+        //    if (_navStore.CurrentViewModel != null)
+        //    {
+        //        _navStore.CurrentViewModel.Dispose();
+        //    }
+        //    _navStore.CurrentViewModel = viewModel;
+        //}
 
-        /// <summary>
-        /// Функция для удаления первой записи истории
-        /// </summary>
-        private string RemoveLastVM()
-        {
-            _historyNavigation = new(_historyNavigation);
-            ViewModelTemplate vm = _historyNavigation.Pop();
-            vm.Dispose();
-            _historyNavigation = new(_historyNavigation);
-            return vm.GetType().Name;
-        }
+        ///// <summary>
+        ///// Функция для удаления первой записи истории
+        ///// </summary>
+        //private string RemoveLastVM()
+        //{
+        //    _historyNavigation = new(_historyNavigation);
+        //    ViewModelTemplate vm = _historyNavigation.Pop();
+        //    vm.Dispose();
+        //    _historyNavigation = new(_historyNavigation);
+        //    return vm.GetType().Name;
+        //}
     }
 }

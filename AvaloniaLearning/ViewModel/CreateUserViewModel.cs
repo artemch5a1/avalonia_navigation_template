@@ -42,7 +42,7 @@ namespace AvaloniaApp.ViewModel
         [RelayCommand]
         private void NavToBack()
         {
-            _navigationService.CloseOverlay();
+            // _navigationService.CloseOverlay();
         }
 
         private void TryCreateUser()

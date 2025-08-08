@@ -29,7 +29,7 @@ namespace AvaloniaApp.ViewModel
         [RelayCommand]
         private void CloseOverlay()
         {
-            _navigationService.CloseOverlay();
+            //_navigationService.CloseOverlay();
         }
 
         public override void Dispose()

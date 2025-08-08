@@ -9,17 +9,5 @@
 		x:DataType="vm:MainWindowViewModel"
         Title="AvaloniaApp"
 		Background="White">
-	<Window.DataTemplates>
-		<DataTemplate DataType="vm:StartPageViewModel">
-			<view:StartPage/>
-		</DataTemplate>
-		<DataTemplate DataType="vm:MainPageViewModel">
-			<view:MainPage/>
-		</DataTemplate>
-		<DataTemplate DataType="vm:EditPageViewModel">
-			<view:EditPage/>
-		</DataTemplate>
-	</Window.DataTemplates>
-	
 	<ContentControl Content="{Binding CurrentViewModel}"/>
 </Window>

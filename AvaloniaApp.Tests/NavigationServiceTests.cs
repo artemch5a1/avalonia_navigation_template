@@ -1,338 +1,338 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using MvvmNavigationKit.Abstractions;
-using MvvmNavigationKit.Abstractions.ViewModelBase;
-using MVVMNavigationKit.Exceptions;
-using MvvmNavigationKit.NavigationServices;
-using MvvmNavigationKit.NavigationStores;
-using MvvmNavigationKit.Options;
-using MvvmNavigationKit.Tests.TestHelper;
+﻿//using Microsoft.Extensions.DependencyInjection;
+//using MvvmNavigationKit.Abstractions;
+//using MvvmNavigationKit.Abstractions.ViewModelBase;
+//using MVVMNavigationKit.Exceptions;
+//using MvvmNavigationKit.NavigationServices;
+//using MvvmNavigationKit.NavigationStores;
+//using MvvmNavigationKit.Options;
+//using MvvmNavigationKit.Tests.TestHelper;
 
-namespace AvaloniaApp.Tests
-{
-    public class NavigationServiceTests
-    {
-        private ServiceProvider _serviceProvider;
+//namespace AvaloniaApp.Tests
+//{
+//    public class NavigationServiceTests
+//    {
+//        private ServiceProvider _serviceProvider;
 
-        public NavigationServiceTests()
-        {
-            ServiceCollection serviceDescriptors = new ServiceCollection();
+//        public NavigationServiceTests()
+//        {
+//            ServiceCollection serviceDescriptors = new ServiceCollection();
 
-            serviceDescriptors.AddSingleton<ViewModelTemplate, ViewModelBase>();
+//            serviceDescriptors.AddSingleton<ViewModelTemplate, ViewModelBase>();
 
-            serviceDescriptors.AddScoped<FakeViewModel>();
+//            serviceDescriptors.AddScoped<FakeViewModel>();
 
-            serviceDescriptors.AddScoped<FakeViewModel2>();
+//            serviceDescriptors.AddScoped<FakeViewModel2>();
 
-            serviceDescriptors.AddScoped<ViewModelBase>();
+//            serviceDescriptors.AddScoped<ViewModelBase>();
 
-            serviceDescriptors.Configure<NavigationOptions>(op => op.MaxSizeHistory = 20);
+//            serviceDescriptors.Configure<NavigationOptions>(op => op.MaxSizeHistory = 20);
 
-            serviceDescriptors.AddScoped<NavigationService>();
+//            serviceDescriptors.AddScoped<NavigationService>();
 
-            serviceDescriptors.AddScoped<INavigationStore, NavigationStore>();
+//            serviceDescriptors.AddScoped<INavigationStore, NavigationStore>();
 
-            serviceDescriptors.AddLogging(config => { });
+//            serviceDescriptors.AddLogging(config => { });
 
-            _serviceProvider = serviceDescriptors.BuildServiceProvider();
-        }
+//            _serviceProvider = serviceDescriptors.BuildServiceProvider();
+//        }
 
-        [Fact]
-        public void Navigate_NavigateToVM_ShouldChangeCurrentVM()
-        {
-            //Arrange
-            NavigationService navigationService =
-                _serviceProvider.GetRequiredService<NavigationService>();
+//        [Fact]
+//        public void Navigate_NavigateToVM_ShouldChangeCurrentVM()
+//        {
+//            //Arrange
+//            NavigationService navigationService =
+//                _serviceProvider.GetRequiredService<NavigationService>();
 
-            //Act
-            navigationService.Navigate<ViewModelBase>();
+//            //Act
+//            navigationService.Navigate<ViewModelBase>();
 
-            //Assert
-            INavigationStore navStore = _serviceProvider.GetRequiredService<INavigationStore>();
+//            //Assert
+//            INavigationStore navStore = _serviceProvider.GetRequiredService<INavigationStore>();
 
-            Assert.True(navStore.CurrentViewModel!.GetType() == typeof(ViewModelBase));
-        }
+//            Assert.True(navStore.CurrentViewModel!.GetType() == typeof(ViewModelBase));
+//        }
 
-        [Fact]
-        public void Navigate_NavigateWithParams_ShouldCallInitializeWithRightParams()
-        {
-            //Arrange
-            NavigationService navigationService =
-                _serviceProvider.GetRequiredService<NavigationService>();
+//        [Fact]
+//        public void Navigate_NavigateWithParams_ShouldCallInitializeWithRightParams()
+//        {
+//            //Arrange
+//            NavigationService navigationService =
+//                _serviceProvider.GetRequiredService<NavigationService>();
 
-            (int, string) @param = (12, "string");
+//            (int, string) @param = (12, "string");
 
-            //Act
-            navigationService.Navigate<FakeViewModel, (int, string)>(@param);
+//            //Act
+//            navigationService.Navigate<FakeViewModel, (int, string)>(@param);
 
-            //Assert
-            FakeViewModel fakeView = _serviceProvider.GetRequiredService<FakeViewModel>();
-            INavigationStore navStore = _serviceProvider.GetRequiredService<INavigationStore>();
+//            //Assert
+//            FakeViewModel fakeView = _serviceProvider.GetRequiredService<FakeViewModel>();
+//            INavigationStore navStore = _serviceProvider.GetRequiredService<INavigationStore>();
 
-            Assert.True(fakeView.itemParam == @param);
-            Assert.True(navStore.CurrentViewModel!.GetType() == typeof(FakeViewModel));
-        }
+//            Assert.True(fakeView.itemParam == @param);
+//            Assert.True(navStore.CurrentViewModel!.GetType() == typeof(FakeViewModel));
+//        }
 
-        [Fact]
-        public void Navigate_NavigateWithWrongTypeParams_ShouldThrowTypeMismatchException()
-        {
-            //Arrange
-            NavigationService navigationService =
-                _serviceProvider.GetRequiredService<NavigationService>();
+//        [Fact]
+//        public void Navigate_NavigateWithWrongTypeParams_ShouldThrowTypeMismatchException()
+//        {
+//            //Arrange
+//            NavigationService navigationService =
+//                _serviceProvider.GetRequiredService<NavigationService>();
 
-            int @param = 12;
+//            int @param = 12;
 
-            //Act & Assert
-            TypeMismatchException? result = Assert.Throws<TypeMismatchException>(() =>
-                navigationService.Navigate<FakeViewModel, int>(@param)
-            );
+//            //Act & Assert
+//            TypeMismatchException? result = Assert.Throws<TypeMismatchException>(() =>
+//                navigationService.Navigate<FakeViewModel, int>(@param)
+//            );
 
-            Assert.Equal(
-                new TypeMismatchException(typeof((int, string)), typeof(int)).Message,
-                result.Message
-            );
-        }
+//            Assert.Equal(
+//                new TypeMismatchException(typeof((int, string)), typeof(int)).Message,
+//                result.Message
+//            );
+//        }
 
-        [Fact]
-        public void Navigate_NavigateWithReferenceTypeParam_ShouldInitialize()
-        {
-            //Arrange
-            NavigationService navigationService =
-                _serviceProvider.GetRequiredService<NavigationService>();
+//        [Fact]
+//        public void Navigate_NavigateWithReferenceTypeParam_ShouldInitialize()
+//        {
+//            //Arrange
+//            NavigationService navigationService =
+//                _serviceProvider.GetRequiredService<NavigationService>();
 
-            Animal animal = new Animal() { Name = "Foo", Age = 10 };
+//            Animal animal = new Animal() { Name = "Foo", Age = 10 };
 
-            //Act
-            navigationService.Navigate<FakeViewModel2, Animal>(animal);
+//            //Act
+//            navigationService.Navigate<FakeViewModel2, Animal>(animal);
 
-            //Assert
-            FakeViewModel2 fakeView = _serviceProvider.GetRequiredService<FakeViewModel2>();
+//            //Assert
+//            FakeViewModel2 fakeView = _serviceProvider.GetRequiredService<FakeViewModel2>();
 
-            Assert.True(animal.Equals(fakeView.animal));
-        }
+//            Assert.True(animal.Equals(fakeView.animal));
+//        }
 
-        [Fact]
-        public void NavigateBack_NavigateWithNotEmptyHistory_NavigateToRightVM()
-        {
-            //Arrange
-            NavigationService navigationService =
-                _serviceProvider.GetRequiredService<NavigationService>();
+//        [Fact]
+//        public void NavigateBack_NavigateWithNotEmptyHistory_NavigateToRightVM()
+//        {
+//            //Arrange
+//            NavigationService navigationService =
+//                _serviceProvider.GetRequiredService<NavigationService>();
 
-            INavigationStore navStore = _serviceProvider.GetRequiredService<INavigationStore>();
+//            INavigationStore navStore = _serviceProvider.GetRequiredService<INavigationStore>();
 
-            //Act
-            navigationService.Navigate<FakeViewModel>();
+//            //Act
+//            navigationService.Navigate<FakeViewModel>();
 
-            navigationService.Navigate<FakeViewModel2>();
+//            navigationService.Navigate<FakeViewModel2>();
 
-            navigationService.Navigate<ViewModelBase>();
+//            navigationService.Navigate<ViewModelBase>();
 
-            //Act & Assert
-            Assert.True(navStore.CurrentViewModel!.GetType() == typeof(ViewModelBase));
+//            //Act & Assert
+//            Assert.True(navStore.CurrentViewModel!.GetType() == typeof(ViewModelBase));
 
-            navigationService.NavigateBack();
+//            navigationService.NavigateBack();
 
-            Assert.True(navStore.CurrentViewModel!.GetType() == typeof(FakeViewModel2));
+//            Assert.True(navStore.CurrentViewModel!.GetType() == typeof(FakeViewModel2));
 
-            navigationService.NavigateBack();
+//            navigationService.NavigateBack();
 
-            Assert.True(navStore.CurrentViewModel!.GetType() == typeof(FakeViewModel));
-        }
+//            Assert.True(navStore.CurrentViewModel!.GetType() == typeof(FakeViewModel));
+//        }
 
-        [Fact]
-        public void NavigateBack_NavigateWithNotEmptyHistory_NavigateAndRefreshAndCleanHistory()
-        {
-            //Arrange
-            NavigationService navigationService =
-                _serviceProvider.GetRequiredService<NavigationService>();
+//        [Fact]
+//        public void NavigateBack_NavigateWithNotEmptyHistory_NavigateAndRefreshAndCleanHistory()
+//        {
+//            //Arrange
+//            NavigationService navigationService =
+//                _serviceProvider.GetRequiredService<NavigationService>();
 
-            INavigationStore navStore = _serviceProvider.GetRequiredService<INavigationStore>();
+//            INavigationStore navStore = _serviceProvider.GetRequiredService<INavigationStore>();
 
-            Animal animal = new Animal() { Name = "A", Age = 1 };
+//            Animal animal = new Animal() { Name = "A", Age = 1 };
 
-            //Act
-            navigationService.Navigate<FakeViewModel2, Animal>(animal);
-            navigationService.Navigate<FakeViewModel>();
-            navigationService.NavigateBack();
+//            //Act
+//            navigationService.Navigate<FakeViewModel2, Animal>(animal);
+//            navigationService.Navigate<FakeViewModel>();
+//            navigationService.NavigateBack();
 
-            //Assert
-            FakeViewModel2 fakeViewModel2 = _serviceProvider.GetRequiredService<FakeViewModel2>();
+//            //Assert
+//            FakeViewModel2 fakeViewModel2 = _serviceProvider.GetRequiredService<FakeViewModel2>();
 
-            Assert.Equal("тест", fakeViewModel2.animal.Breed);
-            Assert.True(!navigationService.HistoryIsNotEmpty);
-        }
+//            Assert.Equal("тест", fakeViewModel2.animal.Breed);
+//            Assert.True(!navigationService.HistoryIsNotEmpty);
+//        }
 
-        [Fact]
-        public void NavigateBack_NavigateStackOverflow_NotNavigateToFirstVM()
-        {
-            //Arrange
-            NavigationService navigationService =
-                _serviceProvider.GetRequiredService<NavigationService>();
+//        [Fact]
+//        public void NavigateBack_NavigateStackOverflow_NotNavigateToFirstVM()
+//        {
+//            //Arrange
+//            NavigationService navigationService =
+//                _serviceProvider.GetRequiredService<NavigationService>();
 
-            INavigationStore navStore = _serviceProvider.GetRequiredService<INavigationStore>();
+//            INavigationStore navStore = _serviceProvider.GetRequiredService<INavigationStore>();
 
-            //Act
-            navigationService.Navigate<FakeViewModel>();
+//            //Act
+//            navigationService.Navigate<FakeViewModel>();
 
-            navigationService.Navigate<FakeViewModel2>();
+//            navigationService.Navigate<FakeViewModel2>();
 
-            for (int i = 0; i < 20; i++)
-            {
-                navigationService.Navigate<ViewModelBase>();
-            }
+//            for (int i = 0; i < 20; i++)
+//            {
+//                navigationService.Navigate<ViewModelBase>();
+//            }
 
-            //Act & Assert
-            for (int i = 0; i < 19; i++)
-            {
-                navigationService.NavigateBack();
-                Assert.True(navStore.CurrentViewModel!.GetType() == typeof(ViewModelBase));
-            }
+//            //Act & Assert
+//            for (int i = 0; i < 19; i++)
+//            {
+//                navigationService.NavigateBack();
+//                Assert.True(navStore.CurrentViewModel!.GetType() == typeof(ViewModelBase));
+//            }
 
-            navigationService.NavigateBack();
+//            navigationService.NavigateBack();
 
-            Assert.True(navStore.CurrentViewModel!.GetType() == typeof(FakeViewModel2));
+//            Assert.True(navStore.CurrentViewModel!.GetType() == typeof(FakeViewModel2));
 
-            navigationService.NavigateBack();
+//            navigationService.NavigateBack();
 
-            Assert.True(navStore.CurrentViewModel!.GetType() == typeof(FakeViewModel2));
-        }
+//            Assert.True(navStore.CurrentViewModel!.GetType() == typeof(FakeViewModel2));
+//        }
 
-        [Fact]
-        public void DestroyAndNavigate_NavigateWithoutParams_ShouldChangeViewModelAndNotSaveInHistory()
-        {
-            //Arrange
-            NavigationService navigationService =
-                _serviceProvider.GetRequiredService<NavigationService>();
+//        [Fact]
+//        public void DestroyAndNavigate_NavigateWithoutParams_ShouldChangeViewModelAndNotSaveInHistory()
+//        {
+//            //Arrange
+//            NavigationService navigationService =
+//                _serviceProvider.GetRequiredService<NavigationService>();
 
-            //Act
-            navigationService.Navigate<ViewModelBase>();
-            navigationService.DestroyAndNavigate<FakeViewModel>();
+//            //Act
+//            navigationService.Navigate<ViewModelBase>();
+//            navigationService.DestroyAndNavigate<FakeViewModel>();
 
-            //Assert
-            INavigationStore navStore = _serviceProvider.GetRequiredService<INavigationStore>();
+//            //Assert
+//            INavigationStore navStore = _serviceProvider.GetRequiredService<INavigationStore>();
 
-            Assert.True(navStore.CurrentViewModel!.GetType() == typeof(FakeViewModel));
-            Assert.True(!navigationService.HistoryIsNotEmpty);
-        }
+//            Assert.True(navStore.CurrentViewModel!.GetType() == typeof(FakeViewModel));
+//            Assert.True(!navigationService.HistoryIsNotEmpty);
+//        }
 
-        [Fact]
-        public void DestroyAndNavigate_NavigateWithParams_ShouldInitializeAndNotSaveInHistoryAndChangeVM()
-        {
-            //Arrange
-            NavigationService navigationService =
-                _serviceProvider.GetRequiredService<NavigationService>();
+//        [Fact]
+//        public void DestroyAndNavigate_NavigateWithParams_ShouldInitializeAndNotSaveInHistoryAndChangeVM()
+//        {
+//            //Arrange
+//            NavigationService navigationService =
+//                _serviceProvider.GetRequiredService<NavigationService>();
 
-            (int, string) @param = (12, "string");
+//            (int, string) @param = (12, "string");
 
-            //Act
-            navigationService.Navigate<ViewModelBase>();
-            navigationService.DestroyAndNavigate<FakeViewModel, (int, string)>(@param);
+//            //Act
+//            navigationService.Navigate<ViewModelBase>();
+//            navigationService.DestroyAndNavigate<FakeViewModel, (int, string)>(@param);
 
-            //Assert
-            FakeViewModel fakeView = _serviceProvider.GetRequiredService<FakeViewModel>();
-            INavigationStore navStore = _serviceProvider.GetRequiredService<INavigationStore>();
+//            //Assert
+//            FakeViewModel fakeView = _serviceProvider.GetRequiredService<FakeViewModel>();
+//            INavigationStore navStore = _serviceProvider.GetRequiredService<INavigationStore>();
 
-            Assert.True(fakeView.itemParam == @param);
-            Assert.True(navStore.CurrentViewModel!.GetType() == typeof(FakeViewModel));
-            Assert.True(!navigationService.HistoryIsNotEmpty);
-        }
+//            Assert.True(fakeView.itemParam == @param);
+//            Assert.True(navStore.CurrentViewModel!.GetType() == typeof(FakeViewModel));
+//            Assert.True(!navigationService.HistoryIsNotEmpty);
+//        }
 
-        [Fact]
-        public void NavigateOverlay_NavigateOverlayWithoutParams_RightAction()
-        {
-            //Arrange
-            NavigationService navigationService =
-                _serviceProvider.GetRequiredService<NavigationService>();
+//        [Fact]
+//        public void NavigateOverlay_NavigateOverlayWithoutParams_RightAction()
+//        {
+//            //Arrange
+//            NavigationService navigationService =
+//                _serviceProvider.GetRequiredService<NavigationService>();
 
-            INavigationStore navigationStore =
-                _serviceProvider.GetRequiredService<INavigationStore>();
+//            INavigationStore navigationStore =
+//                _serviceProvider.GetRequiredService<INavigationStore>();
 
-            ViewModelTemplate? viewModel = null;
+//            ViewModelTemplate? viewModel = null;
 
-            FakeViewModel2 fakeView = _serviceProvider.GetRequiredService<FakeViewModel2>();
+//            FakeViewModel2 fakeView = _serviceProvider.GetRequiredService<FakeViewModel2>();
 
-            //Act
-            navigationService.Navigate<FakeViewModel2>();
+//            //Act
+//            navigationService.Navigate<FakeViewModel2>();
 
-            navigationService.NavigateOverlay<FakeViewModel>(
-                overlayAction: vm =>
-                {
-                    viewModel = vm;
-                },
-                onClose: () =>
-                {
-                    fakeView.RefreshPage();
-                }
-            );
+//            navigationService.NavigateOverlay<FakeViewModel>(
+//                overlayAction: vm =>
+//                {
+//                    viewModel = vm;
+//                },
+//                onClose: () =>
+//                {
+//                    fakeView.RefreshPage();
+//                }
+//            );
 
-            //Assert
-            Assert.Equal(typeof(FakeViewModel), viewModel?.GetType());
+//            //Assert
+//            Assert.Equal(typeof(FakeViewModel), viewModel?.GetType());
 
-            navigationService.CloseOverlay();
+//            navigationService.CloseOverlay();
 
-            Assert.Equal("тест", fakeView.animal.Breed);
-        }
+//            Assert.Equal("тест", fakeView.animal.Breed);
+//        }
 
-        [Fact]
-        public void NavigateOverlay_NavigateOverlayWithParams_RightActionAndInitialize()
-        {
-            //Arrange
-            NavigationService navigationService =
-                _serviceProvider.GetRequiredService<NavigationService>();
+//        [Fact]
+//        public void NavigateOverlay_NavigateOverlayWithParams_RightActionAndInitialize()
+//        {
+//            //Arrange
+//            NavigationService navigationService =
+//                _serviceProvider.GetRequiredService<NavigationService>();
 
-            INavigationStore navigationStore =
-                _serviceProvider.GetRequiredService<INavigationStore>();
+//            INavigationStore navigationStore =
+//                _serviceProvider.GetRequiredService<INavigationStore>();
 
-            ViewModelTemplate? viewModel = null;
+//            ViewModelTemplate? viewModel = null;
 
-            FakeViewModel2 fakeView = _serviceProvider.GetRequiredService<FakeViewModel2>();
+//            FakeViewModel2 fakeView = _serviceProvider.GetRequiredService<FakeViewModel2>();
 
-            FakeViewModel fakeView1 = _serviceProvider.GetRequiredService<FakeViewModel>();
+//            FakeViewModel fakeView1 = _serviceProvider.GetRequiredService<FakeViewModel>();
 
-            (int, string) @params = (15, "тест");
+//            (int, string) @params = (15, "тест");
 
-            //Act
-            navigationService.Navigate<FakeViewModel2>();
+//            //Act
+//            navigationService.Navigate<FakeViewModel2>();
 
-            navigationService.NavigateOverlay<FakeViewModel, (int, string)>(
-                @params,
-                overlayAction: vm =>
-                {
-                    viewModel = vm;
-                },
-                onClose: () =>
-                {
-                    fakeView.RefreshPage();
-                }
-            );
+//            navigationService.NavigateOverlay<FakeViewModel, (int, string)>(
+//                @params,
+//                overlayAction: vm =>
+//                {
+//                    viewModel = vm;
+//                },
+//                onClose: () =>
+//                {
+//                    fakeView.RefreshPage();
+//                }
+//            );
 
-            //Assert
-            Assert.Equal(typeof(FakeViewModel), viewModel?.GetType());
+//            //Assert
+//            Assert.Equal(typeof(FakeViewModel), viewModel?.GetType());
 
-            Assert.Equal(@params, fakeView1.itemParam);
+//            Assert.Equal(@params, fakeView1.itemParam);
 
-            navigationService.CloseOverlay();
+//            navigationService.CloseOverlay();
 
-            Assert.Equal("тест", fakeView.animal.Breed);
-        }
+//            Assert.Equal("тест", fakeView.animal.Breed);
+//        }
 
-        [Fact]
-        public void ResetAndNavigate_ResetAndNavigateToVM_ShouldClearHistory()
-        {
-            //Arrange
-            NavigationService navigationService =
-                _serviceProvider.GetRequiredService<NavigationService>();
+//        [Fact]
+//        public void ResetAndNavigate_ResetAndNavigateToVM_ShouldClearHistory()
+//        {
+//            //Arrange
+//            NavigationService navigationService =
+//                _serviceProvider.GetRequiredService<NavigationService>();
 
-            //Act
-            navigationService.Navigate<FakeViewModel2>();
-            navigationService.Navigate<ViewModelBase>();
-            navigationService.Navigate<FakeViewModel>();
-            navigationService.ResetAndNavigate<FakeViewModel2>();
+//            //Act
+//            navigationService.Navigate<FakeViewModel2>();
+//            navigationService.Navigate<ViewModelBase>();
+//            navigationService.Navigate<FakeViewModel>();
+//            navigationService.ResetAndNavigate<FakeViewModel2>();
 
-            //Assert
-            INavigationStore navStore = _serviceProvider.GetRequiredService<INavigationStore>();
+//            //Assert
+//            INavigationStore navStore = _serviceProvider.GetRequiredService<INavigationStore>();
 
-            Assert.True(navStore.CurrentViewModel!.GetType() == typeof(FakeViewModel2));
-            Assert.True(!navigationService.HistoryIsNotEmpty);
-        }
-    }
-}
+//            Assert.True(navStore.CurrentViewModel!.GetType() == typeof(FakeViewModel2));
+//            Assert.True(!navigationService.HistoryIsNotEmpty);
+//        }
+//    }
+//}

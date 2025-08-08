@@ -1,10 +1,11 @@
-﻿using MvvmNavigationKit.Abstractions.ViewModelBase;
-using System.ComponentModel;
+﻿using System.ComponentModel;
+using Avalonia.Controls;
+using MvvmNavigationKit.Abstractions.ViewModelBase;
 
 namespace MvvmNavigationKit.Abstractions
 {
     public interface INavigationStore : INotifyPropertyChanged
     {
-        ViewModelTemplate? CurrentViewModel { get; set; }
+        UserControl? CurrentViewModel { get; set; }
     }
 }

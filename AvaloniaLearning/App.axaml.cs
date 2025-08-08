@@ -5,6 +5,7 @@ using Avalonia.Markup.Xaml;
 using AvaloniaApp.ServiceAbstractions;
 using AvaloniaApp.Services.DataServices;
 using AvaloniaApp.View.Base;
+using AvaloniaApp.View.Pages;
 using AvaloniaApp.ViewModel;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -35,6 +36,11 @@ namespace AvaloniaApp
         {
             InitializeServices();
 
+            INavigationService navigationService =
+                ServiceProvider.GetRequiredService<INavigationService>();
+
+            ConfigureViewVM(navigationService);
+
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 desktop.MainWindow = new MainWindow();
@@ -42,10 +48,7 @@ namespace AvaloniaApp
                     ServiceProvider.GetRequiredService<MainWindowViewModel>();
             }
 
-            INavigationService navigationService =
-                ServiceProvider.GetRequiredService<INavigationService>();
-
-            navigationService.Navigate<StartPageViewModel>();
+            navigationService.Navigate<StartPage>();
 
             base.OnFrameworkInitializationCompleted();
         }
@@ -67,6 +70,7 @@ namespace AvaloniaApp
             ConfigureNavigationServices(services);
             ConfigureOtherSevice(services);
             ConfigureLoggerService(services);
+            ConfigureViewServices(services);
         }
 
         private void ConfigureLoggerService(IServiceCollection services)
@@ -79,6 +83,23 @@ namespace AvaloniaApp
                     config.SetMinimumLevel(LogLevel.Information);
                 })
                 .UseMicrosoftDependencyResolver();
+        }
+
+        private void ConfigureViewVM(INavigationService service)
+        {
+            service.RegistrViewModel<StartPage, StartPageViewModel>();
+
+            service.RegistrViewModel<MainPage, MainPageViewModel>();
+        }
+
+        private void ConfigureViewServices(IServiceCollection services)
+        {
+            services.AddTransient<ConfirmView>();
+            services.AddTransient<CreateUserView>();
+            services.AddTransient<EditPage>();
+            services.AddTransient<MainPage>();
+            services.AddTransient<ShowUserView>();
+            services.AddTransient<StartPage>();
         }
 
         private void ConfigureViewModelServices(IServiceCollection services)

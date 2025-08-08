@@ -1,20 +1,19 @@
-﻿using MvvmNavigationKit.Abstractions;
-using MvvmNavigationKit.Abstractions.ViewModelBase;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Avalonia.Controls;
+using MvvmNavigationKit.Abstractions;
 
 namespace MvvmNavigationKit.NavigationStores
 {
     public class NavigationStore : INavigationStore
     {
-        private ViewModelTemplate? _currentViewModel;
+        private UserControl? _currentViewModel;
 
-        public ViewModelTemplate? CurrentViewModel
+        public UserControl? CurrentViewModel
         {
             get => _currentViewModel;
             set
             {
-                _currentViewModel?.Dispose();
                 _currentViewModel = value;
                 OnPropertyChanged();
             }
