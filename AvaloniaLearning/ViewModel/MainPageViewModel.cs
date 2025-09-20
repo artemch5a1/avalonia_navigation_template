@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MvvmNavigationKit.Abstractions;
 using MvvmNavigationKit.Abstractions.ViewModelBase;
+using MVVMNavigationKit.Base;
 
 namespace AvaloniaApp.ViewModel
 {

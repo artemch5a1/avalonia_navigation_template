@@ -6,7 +6,7 @@ using MvvmNavigationKit.Abstractions.ViewModelBase;
 using MvvmNavigationKit.NavigationServices;
 using MvvmNavigationKit.NavigationStores;
 using MvvmNavigationKit.Options;
-using System;
+using MVVMNavigationKit.Base.NavigationView;
 
 namespace MVVMNavigationKit.ServiceBuild
 {
@@ -34,6 +34,9 @@ namespace MVVMNavigationKit.ServiceBuild
                 services.AddTransient(kvp.Value);
             }
 
+            services.AddTransient<NavigationViewModel>();
+            services.AddTransient<MainWindow>();
+
             services.AddSingleton<INavigationStore, NavigationStore>();
 
             services.Configure<NavigationOptions>(opt => 
@@ -43,6 +46,14 @@ namespace MVVMNavigationKit.ServiceBuild
             });
 
             services.AddSingleton<INavigationService, NavigationService>();
+        }
+
+        public static Window GetNavigationWindow(IServiceProvider serviceProvider) 
+        {
+            MainWindow mainWindow = serviceProvider.GetRequiredService<MainWindow>();
+            mainWindow.DataContext = serviceProvider.GetRequiredService<NavigationViewModel>();
+
+            return mainWindow;
         }
     }
 }

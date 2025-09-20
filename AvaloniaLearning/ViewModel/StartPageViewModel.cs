@@ -1,5 +1,6 @@
 ﻿using AvaloniaApp.View.Pages;
 using MvvmNavigationKit.Abstractions;
+using MVVMNavigationKit.Base;
 
 namespace AvaloniaApp.ViewModel
 {

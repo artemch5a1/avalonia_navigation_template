@@ -1,7 +1,7 @@
 ﻿using System;
 using MvvmNavigationKit.Abstractions.ViewModelBase;
 
-namespace AvaloniaApp.ViewModel
+namespace MVVMNavigationKit.Base
 {
     /// <summary>
     /// Базовый класс для всех ViewModel в приложении.

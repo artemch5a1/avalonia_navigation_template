@@ -4,13 +4,11 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using AvaloniaApp.ServiceAbstractions;
 using AvaloniaApp.Services.DataServices;
-using AvaloniaApp.View.Base;
 using AvaloniaApp.View.Pages;
 using AvaloniaApp.ViewModel;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MvvmNavigationKit.Abstractions;
-using MvvmNavigationKit.Abstractions.ViewModelBase;
 using MVVMNavigationKit.ServiceBuild;
 using Splat.Microsoft.Extensions.DependencyInjection;
 
@@ -41,9 +39,7 @@ namespace AvaloniaApp
 
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                desktop.MainWindow = new MainWindow();
-                desktop.MainWindow.DataContext =
-                    ServiceProvider.GetRequiredService<MainWindowViewModel>();
+                desktop.MainWindow = NavigationServicesHelper.GetNavigationWindow(ServiceProvider);
             }
 
             navigationService.Navigate<StartPage>();
@@ -64,7 +60,6 @@ namespace AvaloniaApp
 
         private void ConfigureServices(IServiceCollection services)
         {
-            ConfigureViewModelServices(services);
             ConfigureNavigationServices(services);
             ConfigureOtherSevice(services);
             ConfigureLoggerService(services);
@@ -80,11 +75,6 @@ namespace AvaloniaApp
                     config.SetMinimumLevel(LogLevel.Information);
                 })
                 .UseMicrosoftDependencyResolver();
-        }
-
-        private void ConfigureViewModelServices(IServiceCollection services)
-        {
-            services.AddSingleton<MainWindowViewModel>();
         }
 
         private void ConfigureNavigationServices(IServiceCollection services)

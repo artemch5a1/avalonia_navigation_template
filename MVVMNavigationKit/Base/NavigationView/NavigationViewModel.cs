@@ -1,16 +1,18 @@
-﻿using System.ComponentModel;
+﻿
+
 using Avalonia.Controls;
 using MvvmNavigationKit.Abstractions;
+using System.ComponentModel;
 
-namespace AvaloniaApp.ViewModel
+namespace MVVMNavigationKit.Base.NavigationView
 {
-    public partial class MainWindowViewModel : ViewModelBase
+    public class NavigationViewModel : ViewModelBase
     {
         public UserControl? CurrentViewModel => _navStore.CurrentView;
 
         private readonly INavigationStore _navStore;
 
-        public MainWindowViewModel(INavigationStore navStore)
+        public NavigationViewModel(INavigationStore navStore)
         {
             _navStore = navStore;
             _navStore.PropertyChanged += OnViewModelChanged;

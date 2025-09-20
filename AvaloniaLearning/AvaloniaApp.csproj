@@ -33,4 +33,8 @@
     <ProjectReference Include="..\App.Library_UI\App.Library_UI.csproj" />
     <ProjectReference Include="..\MVVMNavigationKit\MVVMNavigationKit.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="View\Base\" />
+  </ItemGroup>
 </Project>
