@@ -6,7 +6,7 @@ namespace AvaloniaApp.ViewModel
 {
     public partial class MainWindowViewModel : ViewModelBase
     {
-        public UserControl? CurrentViewModel => _navStore.CurrentViewModel;
+        public UserControl? CurrentViewModel => _navStore.CurrentView;
 
         private readonly INavigationStore _navStore;
 
@@ -18,7 +18,7 @@ namespace AvaloniaApp.ViewModel
 
         private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(_navStore.CurrentViewModel))
+            if (e.PropertyName == nameof(_navStore.CurrentView))
             {
                 OnPropertyChanged(nameof(CurrentViewModel));
             }

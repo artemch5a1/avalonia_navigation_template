@@ -9,7 +9,7 @@ namespace MvvmNavigationKit.NavigationStores
     {
         private UserControl? _currentViewModel;
 
-        public UserControl? CurrentViewModel
+        public UserControl? CurrentView
         {
             get => _currentViewModel;
             set

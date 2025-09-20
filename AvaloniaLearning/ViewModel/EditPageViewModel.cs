@@ -94,7 +94,7 @@ namespace AvaloniaApp.ViewModel
 
         private void NavigateBack()
         {
-            // _navigationService.NavigateBack();
+            _navigationService.NavigateBack();
         }
     }
 }

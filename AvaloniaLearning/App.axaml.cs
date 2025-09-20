@@ -39,8 +39,6 @@ namespace AvaloniaApp
             INavigationService navigationService =
                 ServiceProvider.GetRequiredService<INavigationService>();
 
-            ConfigureViewVM(navigationService);
-
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 desktop.MainWindow = new MainWindow();
@@ -70,7 +68,6 @@ namespace AvaloniaApp
             ConfigureNavigationServices(services);
             ConfigureOtherSevice(services);
             ConfigureLoggerService(services);
-            ConfigureViewServices(services);
         }
 
         private void ConfigureLoggerService(IServiceCollection services)
@@ -85,42 +82,25 @@ namespace AvaloniaApp
                 .UseMicrosoftDependencyResolver();
         }
 
-        private void ConfigureViewVM(INavigationService service)
-        {
-            service.RegistrViewModel<StartPage, StartPageViewModel>();
-
-            service.RegistrViewModel<MainPage, MainPageViewModel>();
-        }
-
-        private void ConfigureViewServices(IServiceCollection services)
-        {
-            services.AddTransient<ConfirmView>();
-            services.AddTransient<CreateUserView>();
-            services.AddTransient<EditPage>();
-            services.AddTransient<MainPage>();
-            services.AddTransient<ShowUserView>();
-            services.AddTransient<StartPage>();
-        }
-
         private void ConfigureViewModelServices(IServiceCollection services)
         {
             services.AddSingleton<MainWindowViewModel>();
-
-            services.AddTransient<MainPageViewModel>();
-
-            services.AddTransient<StartPageViewModel>();
-
-            services.AddTransient<EditPageViewModel>();
-
-            services.AddTransient<CreateUserViewModel>();
-
-            services.AddTransient<ConfirmViewModel>();
-
-            services.AddTransient<ShowUserViewModel>();
         }
 
         private void ConfigureNavigationServices(IServiceCollection services)
         {
+            NavigationServicesHelper.RegistrNavigationCase<StartPage, StartPageViewModel>();
+
+            NavigationServicesHelper.RegistrNavigationCase<MainPage, MainPageViewModel>();
+
+            NavigationServicesHelper.RegistrNavigationCase<EditPage, EditPageViewModel>();
+
+            NavigationServicesHelper.RegistrNavigationCase<ConfirmView, ConfirmViewModel>();
+
+            NavigationServicesHelper.RegistrNavigationCase<CreateUserView, CreateUserViewModel>();
+
+            NavigationServicesHelper.RegistrNavigationCase<ShowUserView, ShowUserViewModel>();
+
             NavigationServicesHelper.CreateServiceCollections(services);
         }
 

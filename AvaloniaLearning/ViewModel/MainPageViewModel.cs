@@ -68,60 +68,60 @@ namespace AvaloniaApp.ViewModel
         [RelayCommand]
         private void NavToAddUser()
         {
-            //SetOvetlay = true;
-            //_navService.NavigateOverlay<CreateUserViewModel>(
-            //    overlayAction: vm =>
-            //    {
-            //        CurrentOverlayViewModel = vm;
-            //    },
-            //    onClose: () =>
-            //    {
-            //        _ = LoadUsers();
-            //        SetOvetlay = false;
-            //    }
-            //);
+            SetOvetlay = true;
+            _navService.NavigateOverlay<CreateUserView>(
+                overlayAction: (us, vm) =>
+                {
+                    CurrentOverlayViewModel = vm;
+                },
+                onClose: () =>
+                {
+                    _ = LoadUsers();
+                    SetOvetlay = false;
+                }
+            );
         }
 
         [RelayCommand]
         private void NavToInfoUser(int id)
         {
-            //SetOvetlay = true;
-            //_navService.NavigateOverlay<ShowUserViewModel, int>(
-            //    id,
-            //    overlayAction: vm =>
-            //    {
-            //        CurrentOverlayViewModel = vm;
-            //    },
-            //    onClose: () =>
-            //    {
-            //        _ = LoadUsers();
-            //        SetOvetlay = false;
-            //    }
-            //);
+            SetOvetlay = true;
+            _navService.NavigateOverlay<ShowUserView>(
+                overlayAction: (us, vm) =>
+                {
+                    vm?.Initialize(id);
+                    CurrentOverlayViewModel = vm;
+                },
+                onClose: () =>
+                {
+                    _ = LoadUsers();
+                    SetOvetlay = false;
+                }
+            );
         }
 
         [RelayCommand]
         private void DeleteUser(int id)
         {
-            //_currentIdDelete = id;
-            //SetOvetlay = true;
-            //_navService.NavigateOverlay<ConfirmViewModel>(
-            //    overlayAction: vm =>
-            //    {
-            //        CurrentOverlayViewModel = vm;
-            //        if (vm is ConfirmViewModel viewModel)
-            //        {
-            //            viewModel.ConfrimAction += DeleteAction;
-            //            viewModel.Title = "Удалить пользователя?";
-            //        }
-            //    },
-            //    onClose: () =>
-            //    {
-            //        RefreshPage();
-            //        _currentIdDelete = null;
-            //        SetOvetlay = false;
-            //    }
-            //);
+            _currentIdDelete = id;
+            SetOvetlay = true;
+            _navService.NavigateOverlay<ConfirmView>(
+                overlayAction: (us, vm) =>
+                {
+                    CurrentOverlayViewModel = vm;
+                    if (vm is ConfirmViewModel viewModel)
+                    {
+                        viewModel.ConfrimAction += DeleteAction;
+                        viewModel.Title = "Удалить пользователя?";
+                    }
+                },
+                onClose: () =>
+                {
+                    RefreshPage();
+                    _currentIdDelete = null;
+                    SetOvetlay = false;
+                }
+            );
         }
 
         private void DeleteAction()

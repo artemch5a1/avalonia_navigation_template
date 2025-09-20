@@ -6,6 +6,6 @@ namespace MvvmNavigationKit.Abstractions
 {
     public interface INavigationStore : INotifyPropertyChanged
     {
-        UserControl? CurrentViewModel { get; set; }
+        UserControl? CurrentView { get; set; }
     }
 }
