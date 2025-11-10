@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MvvmNavigationKit.Abstractions;
 using MvvmNavigationKit.Abstractions.ViewModelBase;
+using MVVMNavigationKit.Exceptions;
 using MvvmNavigationKit.Options;
 
 namespace MvvmNavigationKit.NavigationServices
@@ -33,19 +34,19 @@ namespace MvvmNavigationKit.NavigationServices
     /// </remarks>
     public class NavigationService : INavigationService
     {
-        private readonly INavigationStore _navStore;
-        private readonly IServiceProvider _serviceProvider;
-        private readonly ILogger _logger;
+        protected readonly INavigationStore _navStore;
+        protected readonly IServiceProvider _serviceProvider;
+        protected readonly ILogger _logger;
 
-        private Stack<ViewModelTemplate> _historyNavigation = new();
-        private readonly int _maxSizeHistory;
+        protected Stack<ViewModelTemplate> _historyNavigation = new();
+        protected readonly int _maxSizeHistory;
 
         /// <summary>
         /// Возврашает true если история не пустая
         /// </summary>
         public bool HistoryIsNotEmpty => _historyNavigation.Count > 0;
 
-        private Action<ViewModelTemplate?>? OverlayAction { get; set; }
+        protected Action<ViewModelTemplate?>? OverlayAction { get; set; }
 
         /// <summary>
         /// Инициализирует новый экземпляр сервиса навигации.
@@ -249,6 +250,12 @@ namespace MvvmNavigationKit.NavigationServices
         )
             where TViewModel : ViewModelTemplate
         {
+            if (OverlayAction is not null)
+            {
+                _logger.LogError("Попытка повторной оверлейной навигации");
+                throw new RepeatedOverlayNavigation();
+            }
+
             ViewModelTemplate viewModel = _serviceProvider.GetRequiredService<TViewModel>();
 
             overlayAction?.Invoke(viewModel);
@@ -284,6 +291,12 @@ namespace MvvmNavigationKit.NavigationServices
         )
             where TViewModel : ViewModelTemplate
         {
+            if (OverlayAction is not null)
+            {
+                _logger.LogError("Попытка повторной оверлейной навигации");
+                throw new RepeatedOverlayNavigation();
+            }
+
             ViewModelTemplate viewModel = _serviceProvider.GetRequiredService<TViewModel>();
 
             viewModel.Initialize(@params);
@@ -314,9 +327,11 @@ namespace MvvmNavigationKit.NavigationServices
         /// </summary>
         public void CloseOverlay()
         {
-            if (!HistoryIsNotEmpty)
+            if (!HistoryIsNotEmpty || OverlayAction is null)
             {
-                _logger.LogError("Попытка закрытия оверлейного окна при пустой истории");
+                _logger.LogError(
+                    "Попытка закрытия оверлейного окна при пустой истории или пустом оверлейном действии"
+                );
                 return;
             }
 
