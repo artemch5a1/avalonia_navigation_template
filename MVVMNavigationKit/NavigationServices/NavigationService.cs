@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MvvmNavigationKit.Abstractions;
 using MvvmNavigationKit.Abstractions.ViewModelBase;
+using MVVMNavigationKit.Exceptions;
 using MvvmNavigationKit.Options;
 
 namespace MvvmNavigationKit.NavigationServices
@@ -33,19 +34,19 @@ namespace MvvmNavigationKit.NavigationServices
     /// </remarks>
     public class NavigationService : INavigationService
     {
-        private readonly INavigationStore _navStore;
-        private readonly IServiceProvider _serviceProvider;
-        private readonly ILogger _logger;
+        protected readonly INavigationStore _navStore;
+        protected readonly IServiceProvider _serviceProvider;
+        protected readonly ILogger _logger;
 
-        private Stack<ViewModelTemplate> _historyNavigation = new();
-        private readonly int _maxSizeHistory;
+        protected Stack<ViewModelTemplate> _historyNavigation = new();
+        protected readonly int _maxSizeHistory;
 
         /// <summary>
         /// Возврашает true если история не пустая
         /// </summary>
         public bool HistoryIsNotEmpty => _historyNavigation.Count > 0;
 
-        private Action<ViewModelTemplate?>? OverlayAction { get; set; }
+        protected Action<ViewModelTemplate?>? OverlayAction { get; set; }
 
         /// <summary>
         /// Инициализирует новый экземпляр сервиса навигации.
@@ -82,7 +83,7 @@ namespace MvvmNavigationKit.NavigationServices
         {
             ViewModelTemplate viewModel = _serviceProvider.GetRequiredService<TViewModel>();
             PushToHistoryAndSetViewModel(viewModel);
-            _logger.LogInformation($"Переход к {viewModel.GetType().Name}");
+            _logger.LogInformation("Переход к {ViewModelType}", viewModel.GetType().Name);
         }
 
         /// <summary>
@@ -104,7 +105,9 @@ namespace MvvmNavigationKit.NavigationServices
             viewModel.Initialize(@params);
             PushToHistoryAndSetViewModel(viewModel);
             _logger.LogInformation(
-                $"Переход к {viewModel.GetType().Name} с передачей параметров: {@params}"
+                "Переход к {ViewModelType} с передачей параметров: {Params}",
+                viewModel.GetType().Name,
+                @params
             );
         }
 
@@ -131,14 +134,14 @@ namespace MvvmNavigationKit.NavigationServices
         {
             if (!HistoryIsNotEmpty)
             {
-                _logger.LogError($"Попытка перехода назад при пустой истории");
+                _logger.LogError("Попытка перехода назад при пустой истории");
                 return;
             }
             _navStore.CurrentViewModel?.Dispose();
             ViewModelTemplate viewModel = _historyNavigation.Pop();
             viewModel.RefreshPage();
             _navStore.CurrentViewModel = viewModel;
-            _logger.LogInformation($"Поэтапный возврат к {viewModel.GetType().Name}");
+            _logger.LogInformation("Поэтапный возврат к {ViewModelType}", viewModel.GetType().Name);
         }
 
         /// <summary>
@@ -161,7 +164,10 @@ namespace MvvmNavigationKit.NavigationServices
         {
             ViewModelTemplate viewModel = _serviceProvider.GetRequiredService<TViewModel>();
             DisposeAndSetViewModel(viewModel);
-            _logger.LogInformation($"Переход к {viewModel.GetType().Name} без сохранения истории");
+            _logger.LogInformation(
+                "Переход к {ViewModelType} без сохранения истории",
+                viewModel.GetType().Name
+            );
         }
 
         /// <summary>
@@ -188,7 +194,9 @@ namespace MvvmNavigationKit.NavigationServices
             viewModel.Initialize(@params);
             DisposeAndSetViewModel(viewModel);
             _logger.LogInformation(
-                $"Переход к {viewModel.GetType().Name} без сохранения истории c передачей параметров: {@params}"
+                "Переход к {ViewModelType} без сохранения истории c передачей параметров: {Params}",
+                viewModel.GetType().Name,
+                @params
             );
         }
 
@@ -199,9 +207,9 @@ namespace MvvmNavigationKit.NavigationServices
         public void ResetAndNavigate<TViewModel>()
             where TViewModel : ViewModelTemplate
         {
-            DestroyAndNavigate<TViewModel>();
             _historyNavigation.Clear();
-            _logger.LogInformation($"История была очищена");
+            DestroyAndNavigate<TViewModel>();
+            _logger.LogInformation("История была очищена");
         }
 
         /// <summary>
@@ -224,14 +232,14 @@ namespace MvvmNavigationKit.NavigationServices
         public void ResetAndNavigate<TViewModel, TParams>(TParams @params)
             where TViewModel : ViewModelTemplate
         {
-            DestroyAndNavigate<TViewModel, TParams>(@params);
             _historyNavigation.Clear();
-            _logger.LogInformation($"История была очищена");
+            DestroyAndNavigate<TViewModel, TParams>(@params);
+            _logger.LogInformation("История была очищена");
         }
 
         /// <summary>
         /// Выполняет навигацию во вложенное оверлейное окно без смены основного контента.
-        /// ViewModel будет записана в историю и может быть закрыта через GoBackOneStep.
+        /// ViewModel будет записана в историю и может быть закрыта через <see cref="CloseOverlay()"/>.
         /// </summary>
         /// <typeparam name="TViewModel">Тип ViewModel оверлея.</typeparam>
         /// <param name="overlayAction">Действие, которое устанавливает или сбрасывает overlay ViewModel в хосте.</param>
@@ -242,7 +250,13 @@ namespace MvvmNavigationKit.NavigationServices
         )
             where TViewModel : ViewModelTemplate
         {
-            ViewModelTemplate? viewModel = _serviceProvider.GetRequiredService<TViewModel>();
+            if (OverlayAction is not null)
+            {
+                _logger.LogError("Попытка повторной оверлейной навигации");
+                throw new RepeatedOverlayNavigation();
+            }
+
+            ViewModelTemplate viewModel = _serviceProvider.GetRequiredService<TViewModel>();
 
             overlayAction?.Invoke(viewModel);
 
@@ -252,9 +266,12 @@ namespace MvvmNavigationKit.NavigationServices
                 onClose?.Invoke();
             };
 
+            if (_navStore.CurrentViewModel is not null)
+                _historyNavigation.Push(_navStore.CurrentViewModel);
+
             _historyNavigation.Push(viewModel);
 
-            _logger.LogInformation($"Оверлейная навигация на {viewModel.GetType().Name}");
+            _logger.LogInformation("Поэтапный возврат к {ViewModelType}", viewModel.GetType().Name);
         }
 
         /// <summary>
@@ -274,6 +291,12 @@ namespace MvvmNavigationKit.NavigationServices
         )
             where TViewModel : ViewModelTemplate
         {
+            if (OverlayAction is not null)
+            {
+                _logger.LogError("Попытка повторной оверлейной навигации");
+                throw new RepeatedOverlayNavigation();
+            }
+
             ViewModelTemplate viewModel = _serviceProvider.GetRequiredService<TViewModel>();
 
             viewModel.Initialize(@params);
@@ -286,10 +309,15 @@ namespace MvvmNavigationKit.NavigationServices
                 onClose?.Invoke();
             };
 
+            if (_navStore.CurrentViewModel is not null)
+                _historyNavigation.Push(_navStore.CurrentViewModel);
+
             _historyNavigation.Push(viewModel);
 
             _logger.LogInformation(
-                $"Оверлейная навигация на {viewModel.GetType().Name} с передачей параметров: {@params}"
+                "Оверлейная навигация на {ViewModelType} с передачей параметров: {Params}",
+                viewModel.GetType().Name,
+                @params
             );
         }
 
@@ -299,15 +327,22 @@ namespace MvvmNavigationKit.NavigationServices
         /// </summary>
         public void CloseOverlay()
         {
-            if (!HistoryIsNotEmpty)
+            if (!HistoryIsNotEmpty || OverlayAction is null)
             {
-                _logger.LogError("Попытка закрытия оверлейного окна при пустой истории");
+                _logger.LogError(
+                    "Попытка закрытия оверлейного окна при пустой истории или пустом оверлейном действии"
+                );
                 return;
             }
 
             ViewModelTemplate viewModel = _historyNavigation.Pop();
 
             viewModel.Dispose();
+
+            if (_historyNavigation.Count != 0)
+            {
+                _historyNavigation.Pop().RefreshPage();
+            }
 
             OverlayAction?.Invoke(null);
 
@@ -337,7 +372,8 @@ namespace MvvmNavigationKit.NavigationServices
                 {
                     string type = RemoveLastVM();
                     _logger.LogWarning(
-                        $"Превышен лимит истории, удалена самая старая запись ({type})"
+                        "Превышен лимит истории, удалена самая старая запись ({ViewModelType})",
+                        type
                     );
                 }
                 _historyNavigation.Push(_navStore.CurrentViewModel);
